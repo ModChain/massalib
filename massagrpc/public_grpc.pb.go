@@ -91,7 +91,8 @@ type PublicServiceClient interface {
 	SearchOperations(ctx context.Context, in *SearchOperationsRequest, opts ...grpc.CallOption) (*SearchOperationsResponse, error)
 	// Get ABI call stack of an operation
 	GetOperationABICallStacks(ctx context.Context, in *GetOperationABICallStacksRequest, opts ...grpc.CallOption) (*GetOperationABICallStacksResponse, error)
-	// Get ABI call stack of all asynchronous executions and all operations for a given slot
+	// Get ABI call stack of all asynchronous executions and all operations for a
+	// given slot
 	GetSlotABICallStacks(ctx context.Context, in *GetSlotABICallStacksRequest, opts ...grpc.CallOption) (*GetSlotABICallStacksResponse, error)
 	// Get all the transfers of MAS for a given slot
 	GetSlotTransfers(ctx context.Context, in *GetSlotTransfersRequest, opts ...grpc.CallOption) (*GetSlotTransfersResponse, error)
@@ -488,7 +489,8 @@ type PublicServiceServer interface {
 	SearchOperations(context.Context, *SearchOperationsRequest) (*SearchOperationsResponse, error)
 	// Get ABI call stack of an operation
 	GetOperationABICallStacks(context.Context, *GetOperationABICallStacksRequest) (*GetOperationABICallStacksResponse, error)
-	// Get ABI call stack of all asynchronous executions and all operations for a given slot
+	// Get ABI call stack of all asynchronous executions and all operations for a
+	// given slot
 	GetSlotABICallStacks(context.Context, *GetSlotABICallStacksRequest) (*GetSlotABICallStacksResponse, error)
 	// Get all the transfers of MAS for a given slot
 	GetSlotTransfers(context.Context, *GetSlotTransfersRequest) (*GetSlotTransfersResponse, error)
