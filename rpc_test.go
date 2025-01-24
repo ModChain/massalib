@@ -1,0 +1,25 @@
+package massalib
+
+import (
+	"context"
+	"log"
+	"testing"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+func TestRPC(t *testing.T) {
+	c, err := New("localhost:33037", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Skipf("failed to establish RPC: %s", err)
+		return
+	}
+
+	st, err := c.GetStatus(context.Background())
+	if err != nil {
+		t.Errorf("failed to get massa status: %s", err)
+		return
+	}
+	log.Printf("connected to massa nodeid = %s version = %s", st.NodeId, st.Version)
+}
