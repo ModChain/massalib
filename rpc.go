@@ -2,6 +2,9 @@ package massalib
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"log"
 
 	"github.com/ModChain/massalib/massagrpc"
 	"google.golang.org/grpc"
@@ -40,4 +43,33 @@ func (rpc *RPC) GetStatus(ctx context.Context) (*massagrpc.PublicStatus, error) 
 		return nil, err
 	}
 	return res.Status, nil
+}
+
+func (rpc *RPC) GetSlotTransfers(ctx context.Context, finality massagrpc.FinalityLevel) (chan *massagrpc.NewSlotTransfersResponse, error) {
+	bidi, err := rpc.pub.NewSlotTransfers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("new slottransfers failed: %w", err)
+	}
+	//if err := bidi.CloseSend(); err != nil {
+	//		return nil, fmt.Errorf("closeSend failed: %w", err)
+	//	}
+
+	ch := make(chan *massagrpc.NewSlotTransfersResponse)
+	go func() {
+		defer close(ch)
+		for {
+			resp, err := bidi.Recv()
+			if err == io.EOF {
+				log.Printf("got EOF")
+				return
+			}
+			if err != nil {
+				log.Printf("MASSA error on recv: %s", err)
+				return
+			}
+			ch <- resp
+		}
+	}()
+
+	return ch, nil
 }

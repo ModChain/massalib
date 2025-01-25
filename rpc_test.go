@@ -5,6 +5,7 @@ import (
 	"log"
 	"testing"
 
+	"github.com/ModChain/massalib/massagrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -22,4 +23,14 @@ func TestRPC(t *testing.T) {
 		return
 	}
 	log.Printf("connected to massa nodeid = %s version = %s", st.NodeId, st.Version)
+
+	ch, err := c.GetSlotTransfers(context.Background(), massagrpc.FinalityLevel_FINALITY_LEVEL_FINAL)
+	if err != nil {
+		t.Errorf("failed to request transfers: %s", err)
+	}
+
+	for tx := range ch {
+		log.Printf("tx = %+v %+v", tx.Slot, tx.Transfers)
+	}
+	log.Printf("end")
 }
