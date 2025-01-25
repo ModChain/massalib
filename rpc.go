@@ -45,14 +45,21 @@ func (rpc *RPC) GetStatus(ctx context.Context) (*massagrpc.PublicStatus, error) 
 	return res.Status, nil
 }
 
-func (rpc *RPC) GetSlotTransfers(ctx context.Context, finality massagrpc.FinalityLevel) (chan *massagrpc.NewSlotTransfersResponse, error) {
+func (rpc *RPC) GetSlotTransfers(ctx context.Context, finality massagrpc.FinalityLevel) (chan *massagrpc.NewSlotTransfersResponse, io.Closer, error) {
+	// note: this requires massa to be compiled with feature massa-node/execution-trace
 	bidi, err := rpc.pub.NewSlotTransfers(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("new slottransfers failed: %w", err)
+		return nil, nil, fmt.Errorf("new slottransfers failed: %w", err)
 	}
-	//if err := bidi.CloseSend(); err != nil {
-	//		return nil, fmt.Errorf("closeSend failed: %w", err)
-	//	}
+	req := &massagrpc.NewSlotTransfersRequest{
+		FinalityLevel: finality,
+	}
+	if err := bidi.Send(req); err != nil {
+		return nil, nil, fmt.Errorf("failed to set finality level: %w", err)
+	}
+
+	// when CloseSend is called, massa closes the pipe
+	// https://github.com/massalabs/massa/blob/main/massa-grpc/src/stream/new_slot_transfers.rs#L142
 
 	ch := make(chan *massagrpc.NewSlotTransfersResponse)
 	go func() {
@@ -71,5 +78,13 @@ func (rpc *RPC) GetSlotTransfers(ctx context.Context, finality massagrpc.Finalit
 		}
 	}()
 
-	return ch, nil
+	return ch, bidiCloser{bidi}, nil
+}
+
+type bidiCloser struct {
+	grpc.ClientStream
+}
+
+func (b bidiCloser) Close() error {
+	return b.ClientStream.CloseSend()
 }

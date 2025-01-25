@@ -24,10 +24,11 @@ func TestRPC(t *testing.T) {
 	}
 	log.Printf("connected to massa nodeid = %s version = %s", st.NodeId, st.Version)
 
-	ch, err := c.GetSlotTransfers(context.Background(), massagrpc.FinalityLevel_FINALITY_LEVEL_FINAL)
+	ch, clo, err := c.GetSlotTransfers(context.Background(), massagrpc.FinalityLevel_FINALITY_LEVEL_FINAL)
 	if err != nil {
 		t.Errorf("failed to request transfers: %s", err)
 	}
+	defer clo.Close()
 
 	for tx := range ch {
 		log.Printf("tx = %+v %+v", tx.Slot, tx.Transfers)
