@@ -3,6 +3,9 @@ package massalib
 import (
 	"bufio"
 	"crypto/sha256"
+	"crypto/subtle"
+	"errors"
+	"fmt"
 	"io"
 	"slices"
 
@@ -84,4 +87,51 @@ func (a *Address) String() string {
 	default:
 		return "A?" + suffix
 	}
+}
+
+func DecodeAddress(addr string) (*Address, error) {
+	if len(addr) < 2 {
+		return nil, errors.New("invalid massa address")
+	}
+
+	var cat uint64
+	switch addr[:2] {
+	case "AU":
+		cat = 0
+	case "AS":
+		cat = 1
+	default:
+		return nil, fmt.Errorf("invalid massa address prefix %s", addr[:2])
+	}
+
+	addr = addr[2:]
+	buf, err := base58.Bitcoin.Decode(addr)
+	if err != nil {
+		return nil, err
+	}
+	if len(buf) < 4 {
+		return nil, errors.New("invalid massa address")
+	}
+
+	// check checksum
+	cksum := buf[len(buf)-4:]
+	buf = buf[:len(buf)-4]
+	computedCksum := cryptutil.Hash(buf, sha256.New, sha256.New)
+	if subtle.ConstantTimeCompare(cksum, computedCksum[:4]) != 1 {
+		return nil, errors.New("invalid massa address")
+	}
+
+	// let's decode the version
+	vers, buflen, err := DecodeProtobufVarint(buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &Address{
+		Category: cat,
+		Version:  vers,
+		Hash:     buf[buflen:],
+	}
+
+	return res, nil
 }
