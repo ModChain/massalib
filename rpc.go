@@ -81,6 +81,24 @@ func (rpc *RPC) GetSlotTransfers(ctx context.Context, finality massagrpc.Finalit
 	return ch, bidiCloser{bidi}, nil
 }
 
+func (rpc *RPC) SendOperations(ctx context.Context, op ...[]byte) error {
+	bidi, err := rpc.pub.SendOperations(ctx)
+	if err != nil {
+		return err
+	}
+	defer bidi.CloseSend()
+
+	if err := bidi.Send(&massagrpc.SendOperationsRequest{Operations: op}); err != nil {
+		return err
+	}
+	// wait for response, just in case
+	_, err = bidi.Recv()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 type bidiCloser struct {
 	grpc.ClientStream
 }
