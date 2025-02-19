@@ -36,7 +36,7 @@ type OperationBody interface {
 
 type Operation struct {
 	Fee    Amount
-	Expire uint64 // expire_period
+	Expire uint64 // expire_period, typically current period + 10
 	Body   OperationBody
 }
 
