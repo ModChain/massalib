@@ -10,11 +10,24 @@ import (
 
 	"github.com/KarpelesLab/cryptutil"
 	"github.com/ModChain/base58"
+	"lukechampine.com/blake3"
 )
 
 type PublicKey struct {
 	Version uint64
 	PubKey  ed25519.PublicKey
+}
+
+func (pk *PublicKey) AsAddress() *Address {
+	h := blake3.Sum256(pk.Bytes())
+
+	res := &Address{
+		Category: 0,
+		Version:  0,
+		Hash:     h[:],
+	}
+
+	return res
 }
 
 func (pk *PublicKey) Bytes() []byte {

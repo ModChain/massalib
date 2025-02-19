@@ -31,8 +31,14 @@ func TestRPC(t *testing.T) {
 	}
 	defer clo.Close()
 
+	cnt := 0
+
 	for tx := range ch {
 		log.Printf("tx = %+v %+v", tx.Slot, tx.Transfers)
+		cnt += 1
+		if cnt > 4 {
+			break
+		}
 	}
 	log.Printf("end")
 }

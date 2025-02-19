@@ -94,6 +94,37 @@ func DecodeAddress(addr string) (*Address, error) {
 		return nil, errors.New("invalid massa address")
 	}
 
+	if addr[0] == 'P' {
+		// from a public key
+
+		buf, err := base58.Bitcoin.Decode(addr[1:])
+		if err != nil {
+			return nil, err
+		}
+		if len(buf) < 4 {
+			return nil, errors.New("invalid massa address")
+		}
+
+		// check checksum
+		cksum := buf[len(buf)-4:]
+		buf = buf[:len(buf)-4]
+		computedCksum := cryptutil.Hash(buf, sha256.New, sha256.New)
+		if subtle.ConstantTimeCompare(cksum, computedCksum[:4]) != 1 {
+			return nil, errors.New("invalid massa public key")
+		}
+
+		// hash pubkey
+		h := blake3.Sum256(buf)
+
+		res := &Address{
+			Category: 0,
+			Version:  0,
+			Hash:     h[:],
+		}
+
+		return res, nil
+	}
+
 	var cat uint64
 	switch addr[:2] {
 	case "AU":
