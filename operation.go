@@ -2,7 +2,10 @@ package massalib
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/ed25519"
+	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -41,6 +44,22 @@ type Operation struct {
 func (o *Operation) Bytes() []byte {
 	// Fee, Expire, Type & body
 	return slices.Concat(o.Fee.Bytes(), EncodeProtobufVarint(o.Expire), EncodeProtobufVarint(uint64(o.Body.Type())), o.Body.Bytes())
+}
+
+// Sign signs the given operation and returns a serialized operation
+func (o *Operation) Sign(chainId ChainId, key crypto.Signer) ([]byte, error) {
+	pub, ok := key.Public().(ed25519.PublicKey)
+	if !ok {
+		return nil, errors.New("invalid key passed to Sign")
+	}
+	h := o.Hash(chainId, pub)
+	sig, err := key.Sign(rand.Reader, h, crypto.Hash(0))
+	if err != nil {
+		return nil, err
+	}
+	// See: https://docs.massa.net/docs/learn/operation-format-execution
+	return slices.Concat(EncodeProtobufVarint(0), sig, EncodeProtobufVarint(0), pubKey, o.Bytes()), nil
+
 }
 
 // Hash returns the operation contents hash
