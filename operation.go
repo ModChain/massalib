@@ -2,9 +2,12 @@ package massalib
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"fmt"
 	"io"
 	"slices"
+
+	"lukechampine.com/blake3"
 )
 
 type OperationType uint32
@@ -38,6 +41,14 @@ type Operation struct {
 func (o *Operation) Bytes() []byte {
 	// Fee, Expire, Type & body
 	return slices.Concat(o.Fee.Bytes(), EncodeProtobufVarint(o.Expire), EncodeProtobufVarint(uint64(o.Body.Type())), o.Body.Bytes())
+}
+
+// Hash returns the operation contents hash
+func (o *Operation) Hash(chainId ChainId, pubKey ed25519.PublicKey) []byte {
+	// chainid + pubkey vers[0] + pubkey + Bytes
+	buf := slices.Concat(chainId.Bytes(), EncodeProtobufVarint(0), pubKey, o.Bytes())
+	h := blake3.Sum256(buf)
+	return h[:]
 }
 
 func (o *Operation) UnmarshalBinary(b []byte) error {
