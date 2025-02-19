@@ -58,7 +58,7 @@ func (o *Operation) Sign(chainId ChainId, key crypto.Signer) ([]byte, error) {
 		return nil, err
 	}
 	// See: https://docs.massa.net/docs/learn/operation-format-execution
-	return slices.Concat(EncodeProtobufVarint(0), sig, EncodeProtobufVarint(0), pubKey, o.Bytes()), nil
+	return slices.Concat(EncodeProtobufVarint(0), sig, EncodeProtobufVarint(0), pub, o.Bytes()), nil
 
 }
 
